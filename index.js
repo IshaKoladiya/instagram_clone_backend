@@ -94,46 +94,39 @@ io.on("connection", (socket) => {
 
 // get all user in chat
 
-app.get("/user/chat", async (req, res) => {
+app.get("/users/chat-show-user", async (req, res) => {
   try {
-    const receiveId = await messageModel.find({});
-    const findAllReceiveId = receiveId.map((message) => message.receiverId);
-    const uniqueReceiveIds = [...new Set(findAllReceiveId)];
-    const receiveIdData = await userModel.find({ _id: uniqueReceiveIds });
-    res.status(200).send([receiveIdData]);
-  } catch (error) {
-    res.status(500).send(error);
-  }
-});
-
-app.get("/users/chat-show-user/:id", async (req, res) => {
-  try {
-    var receiverID = req.params.id;
-   
     const token = req.headers.authorization.split(" ")[1];
 
     // Verify token
-    verifyToken(token, async (err, data) => {
+    verifyToken(token, async(err, data) => {
       if (err) {
         res.status(500).send("Something Went Wrong");
       } else {
-        var senderID = data.id;
-        console.log('receverID : ', receiverID);
-        console.log('senderID : ', senderID);
-       
-        const findUser = await messageModel.find({
-          senderId: receiverID,
-          receiverId: senderID,
+        let findUser = await messageModel.find({
+          senderId: data.id
         });
+
+        console.log(">>>>>>>>>>>>>>>>>>>>>>>> findUser >>>>>>>>>>>>>>>>>>>>>>>>>>>>" , findUser)
         
         const receiverIds = [
           ...new Set(findUser.map((message) => message.receiverId)),
         ];
         
-        console.log(receiverIds);
-        const receiveIdData = await userModel.find({ _id: { $in: receiverIds } });
+        console.log("_______________ receiverIds ____________________" , receiverIds);
 
-        res.status(200).send(receiveIdData);
+        if (receiverIds.length > 0) {
+          const receiveIdData = await userModel.find({ _id: { $in: receiverIds } });
+          console.log("Receiver Data: ", receiveIdData);
+
+          if (receiveIdData.length == 0) {
+            res.status(404).send("No users found for the given receiver IDs");
+          } else {
+            res.status(200).send(receiveIdData);
+          }
+        } else {
+          res.status(404).send("No receiver IDs found for the user's messages");
+        }
       }
     });
   } catch (error) {
