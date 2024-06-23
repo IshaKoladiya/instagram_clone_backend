@@ -705,6 +705,10 @@ app.post("/users/posts", (req, res) => {
   });
 });
 
+app.get('/' , (req , res)=>{
+  res.status(200).send('server Hello Everything');
+})
+
 httpServer.listen(4000, () => {
   console.log("server listening on port 4000");
 });
